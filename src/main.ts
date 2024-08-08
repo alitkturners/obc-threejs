@@ -1,53 +1,45 @@
-import * as OBC from "openbim-components"
-import * as THREE from "three"
+import {
+  Viewer,
+  XKTLoaderPlugin,
+  DistanceMeasurementsPlugin,
+  StoreyViewsPlugin,
+} from "@xeokit/xeokit-sdk";
 
-const viewer = new OBC.Components()
-viewer.onInitialized.add(() => {})
+const viewer = new Viewer({
+  canvasId: "xeokit_canvas",
+  transparent: true,
+  dtxEnabled: true,
+  pickSurfacePrecisionEnabled: true,
+});
 
-const sceneComponent = new OBC.SimpleScene(viewer)
-viewer.scene = sceneComponent
-const scene = sceneComponent.get()
-const ambientLight = new THREE.AmbientLight(0xE6E7E4, 1)
-const directionalLight = new THREE.DirectionalLight(0xF9F9F9, 0.75)
-directionalLight.position.set(10, 50, 10)
-scene.add(ambientLight, directionalLight)
-scene.background = new THREE.Color("#202932")
+viewer.scene.camera.eye = [1, 1.38, -129.06444239626097];
+viewer.scene.camera.look = [4.09, 0.5, -26.76];
+viewer.scene.camera.up = [0.06, 0.96, 0.16];
 
-const viewerContainer = document.getElementById("app") as HTMLDivElement
-const rendererComponent = new OBC.PostproductionRenderer(viewer, viewerContainer)
-viewer.renderer = rendererComponent
+const xktLoader = new XKTLoaderPlugin(viewer);
+const distanceMeasurements = new DistanceMeasurementsPlugin(viewer);
 
-const cameraComponent = new OBC.OrthoPerspectiveCamera(viewer)
-viewer.camera = cameraComponent
+const storeyViewsPlugin = new StoreyViewsPlugin(viewer);
 
-const raycasterComponent = new OBC.SimpleRaycaster(viewer)
-viewer.raycaster = raycasterComponent
-
-viewer.init()
-rendererComponent.postproduction.enabled = true
-
-new OBC.SimpleGrid(viewer, new THREE.Color(0x666666))
-
-const ifcLoader = new OBC.FragmentIfcLoader(viewer)
-
-const highlighter = new OBC.FragmentHighlighter(viewer)
-highlighter.setup()
-
-const propertiesProcessor = new OBC.IfcPropertiesProcessor(viewer)
-
-ifcLoader.onIfcLoaded.add(async (model) => {
-  propertiesProcessor.process(model)
-  await highlighter.update()
-  highlighter.events.select.onHighlight.add((selection) => {
-    const fragmentID = Object.keys(selection)[0]
-    const expressID = Number([...selection[fragmentID]][0])
-    propertiesProcessor.renderProperties(model, expressID)
-  })
-})
-
-const mainToolbar = new OBC.Toolbar(viewer)
-mainToolbar.addChild(
-  ifcLoader.uiElement.get("main"),
-  propertiesProcessor.uiElement.get("main")
-)
-viewer.ui.addToolbar(mainToolbar)
+const sceneModel = xktLoader.load({
+  id: "myModel",
+  src: "/model.xkt",
+  // saoEnabled: true,
+  edges: false,
+  // dtxEnabled: true
+});
+const measurmentButton = document.getElementById("measurements");
+const storey = storeyViewsPlugin
+console.log(storey);
+measurmentButton?.addEventListener("click", () => {
+  if (distanceMeasurements.control.active) {
+    distanceMeasurements.control.deactivate();
+    return null;
+  }
+  distanceMeasurements.control.activate();
+});
+const pickResult = viewer.scene.pick({
+  canvasPos: [200, 200],
+  pickSurface: true, // <<---------- Do surface picking
+  pickSurfacePrecision: true, // <<--- Use precise surface picking
+});
