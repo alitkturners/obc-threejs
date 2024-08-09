@@ -15,7 +15,6 @@
   },
   "dependencies": {
     "@mui/material": "^5.16.7",
-    "@thatopen/components": "^2.1.21",
     "openbim-components": "^1.1.0",
     "three": "^0.156.0"
   }
