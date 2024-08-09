@@ -62,11 +62,7 @@ button.onClick.add(() => {
   }
   modal!.style.display = "block";
 });
-window.onclick = function (event) {
-  if (event.target === modal) {
-    modal!.style.display = "none"; // Non-null assertion
-  }
-};
+
 ifcLoader.onIfcLoaded.add(async (model) => {
   propertiesProcessor.process(model);
   await highlighter.update();
